@@ -1,64 +1,64 @@
-import { Wallet, ArrowDownLeft, ArrowUpRight, RotateCcw } from "lucide-react";
+import { Wallet, TrendingUp, Percent, ArrowDownRight } from "lucide-react";
+import { useSummary } from "@/hooks/useStore";
 
 interface KPICardProps {
   label: string;
   value: string;
-  trend: string;
-  trendUp: boolean;
   icon: React.ReactNode;
+  accent?: "default" | "success" | "warning" | "destructive";
 }
 
-function KPICard({ label, value, trend, trendUp, icon }: KPICardProps) {
+function KPICard({ label, value, icon, accent = "default" }: KPICardProps) {
+  const accentStyles = {
+    default: "bg-primary/10 text-primary",
+    success: "bg-success/10 text-success",
+    warning: "bg-warning/10 text-warning",
+    destructive: "bg-destructive/10 text-destructive",
+  };
+
   return (
     <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm text-muted-foreground">{label}</span>
-        <div className="p-2 rounded-md bg-muted">{icon}</div>
+        <div className={`p-2 rounded-md ${accentStyles[accent]}`}>{icon}</div>
       </div>
-      <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
-      <span
-        className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full ${
-          trendUp
-            ? "bg-success/10 text-success"
-            : "bg-destructive/10 text-destructive"
-        }`}
-      >
-        {trend}
-      </span>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
     </div>
   );
 }
 
+function fmt(v: number) {
+  return `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export function DashboardCards() {
+  const { balance, totalGross, totalFees, totalExits } = useSummary();
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <KPICard
-        label="Saldo Atual"
-        value="R$ 124.580,00"
-        trend="+12.5%"
-        trendUp
-        icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
+        label="Saldo em Conta"
+        value={fmt(balance)}
+        accent="default"
+        icon={<Wallet className="h-4 w-4" />}
       />
       <KPICard
-        label="Entradas"
-        value="R$ 43.200,00"
-        trend="+8.2%"
-        trendUp
-        icon={<ArrowDownLeft className="h-4 w-4 text-muted-foreground" />}
+        label="Vendas Brutas"
+        value={fmt(totalGross)}
+        accent="success"
+        icon={<TrendingUp className="h-4 w-4" />}
       />
       <KPICard
-        label="Saídas"
-        value="R$ 18.450,00"
-        trend="-3.1%"
-        trendUp={false}
-        icon={<ArrowUpRight className="h-4 w-4 text-muted-foreground" />}
+        label="Taxas Pagas"
+        value={fmt(totalFees)}
+        accent="warning"
+        icon={<Percent className="h-4 w-4" />}
       />
       <KPICard
-        label="Estornos"
-        value="R$ 2.340,00"
-        trend="+1.4%"
-        trendUp={false}
-        icon={<RotateCcw className="h-4 w-4 text-muted-foreground" />}
+        label="Total de Saídas"
+        value={fmt(totalExits)}
+        accent="destructive"
+        icon={<ArrowDownRight className="h-4 w-4" />}
       />
     </div>
   );
