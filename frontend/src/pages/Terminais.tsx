@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Topbar } from "@/components/Topbar";
@@ -18,7 +18,7 @@ const Terminals = () => {
   // 1. Função para buscar terminais do Java
   const fetchTerminals = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/terminals");
+      const res = await api.get("/api/terminals");
       // BLINDAGEM 1: Garante que só vai para o estado se for uma lista real
       setTerminals(Array.isArray(res.data) ? res.data : []);
       setIsOnline(true);
@@ -37,7 +37,7 @@ const Terminals = () => {
   const handleAddTerminal = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8080/api/terminals", {
+      await api.post("/api/terminals", {
         name,
         feePercentage: parseFloat(fee)
       });
@@ -56,7 +56,7 @@ const Terminals = () => {
     if (!window.confirm("Tem certeza que deseja excluir esta maquininha?")) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/terminals/${id}`);
+      await api.delete(`/api/terminals/${id}`);
       toast.success("Maquininha excluída com sucesso!");
       fetchTerminals(); // Atualiza a lista na tela após excluir
     } catch (error) {
