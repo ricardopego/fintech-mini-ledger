@@ -19,10 +19,12 @@ const Terminals = () => {
   const fetchTerminals = async () => {
     try {
       const res = await axios.get("http://localhost:8080/api/terminals");
-      setTerminals(res.data);
+      // BLINDAGEM 1: Garante que só vai para o estado se for uma lista real
+      setTerminals(Array.isArray(res.data) ? res.data : []);
       setIsOnline(true);
     } catch (error) {
       setIsOnline(false);
+      setTerminals([]);
       console.error("Erro ao buscar terminais");
     }
   };
@@ -47,6 +49,25 @@ const Terminals = () => {
       toast.error("Erro ao salvar no banco. O Java está rodando?");
     }
   };
+
+  // 3. Função para EXCLUIR no Postgres (Adicionada agora!)
+  const handleDeleteTerminal = async (id: string) => {
+    // Confirmação para evitar cliques acidentais
+    if (!window.confirm("Tem certeza que deseja excluir esta maquininha?")) return;
+
+    try {
+      await axios.delete(`http://localhost:8080/api/terminals/${id}`);
+      toast.success("Maquininha excluída com sucesso!");
+      fetchTerminals(); // Atualiza a lista na tela após excluir
+    } catch (error) {
+      console.error(error);
+      // O erro mais comum aqui será o bloqueio do banco de dados (Foreign Key)
+      toast.error("Erro: Não é possível excluir uma maquininha que já possui vendas atreladas.");
+    }
+  };
+
+  // BLINDAGEM 2: Trava de segurança extra para a renderização no HTML
+  const safeTerminals = Array.isArray(terminals) ? terminals : [];
 
   return (
     <SidebarProvider>
@@ -81,10 +102,10 @@ const Terminals = () => {
             {/* LISTA DE TERMINAIS VINDOS DO JAVA */}
             <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
               <div className="p-4 border-b border-border bg-muted/20">
-                <h3 className="text-sm font-semibold">Terminais Ativos ({terminals.length})</h3>
+                <h3 className="text-sm font-semibold">Terminais Ativos ({safeTerminals.length})</h3>
               </div>
               <div className="divide-y divide-border">
-                {terminals.map((t: any) => (
+                {safeTerminals.map((t: any) => (
                   <div key={t.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-primary/10 rounded-lg">
@@ -92,16 +113,24 @@ const Terminals = () => {
                       </div>
                       <div>
                         <p className="font-medium">{t.name}</p>
-                        <p className="text-xs text-muted-foreground">ID: {t.id.substring(0,8)}... | Taxa: {t.feePercentage}%</p>
+                        {/* BLINDAGEM 3: Opcional Chaining no ID para não quebrar o .substring */}
+                        <p className="text-xs text-muted-foreground">
+                          ID: {t.id?.toString().substring(0,8) || "N/A"}... | Taxa: {t.feePercentage}%
+                        </p>
                       </div>
                     </div>
-                    {/* Botão de excluir pode ser implementado na AC2 */}
-                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                    {/* BOTÃO DE EXCLUIR AGORA COM A FUNÇÃO ONCLICK */}
+                    <Button 
+                      onClick={() => handleDeleteTerminal(t.id)} 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:bg-destructive/10"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
-                {terminals.length === 0 && (
+                {safeTerminals.length === 0 && (
                   <div className="p-10 text-center text-muted-foreground italic">
                     Nenhum terminal cadastrado no Postgres.
                   </div>

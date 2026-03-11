@@ -9,6 +9,6 @@ import java.util.UUID;
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
 
     @Override
-    @EntityGraph(attributePaths = {"terminal"})
+    @EntityGraph(attributePaths = {"terminal"}) // Força o preenchimento do objeto Terminal
     List<Transaction> findAll();
 }

@@ -31,13 +31,22 @@ public class TransactionController {
     @PostMapping
     public Transaction create(@RequestBody TransactionRequest request) {
         Transaction transaction = new Transaction();
+
+        // Salva a descrição (pode ser null para vendas, mas o record deve aceitar)
         transaction.setDescription(request.description());
         transaction.setAmount(request.amount());
         transaction.setCreatedAt(LocalDateTime.now());
 
+        // CRÍTICO: Se o terminalId vier no JSON, temos de procurar e associar
         if (request.terminalId() != null) {
-            Terminal terminal = terminalRepository.findById(request.terminalId()).orElse(null);
+            Terminal terminal = terminalRepository.findById(request.terminalId())
+                    .orElse(null);
             transaction.setTerminal(terminal);
+
+            // Se for venda e a descrição for nula, podemos setar um padrão
+            if (transaction.getDescription() == null && terminal != null) {
+                transaction.setDescription("Venda via " + terminal.getName());
+            }
         }
 
         return repository.save(transaction);

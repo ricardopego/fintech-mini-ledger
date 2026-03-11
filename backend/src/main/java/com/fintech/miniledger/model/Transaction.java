@@ -21,7 +21,7 @@ public class Transaction {
 
     private LocalDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER) // Garante que o terminal venha no JSON
     @JoinColumn(name = "terminal_id", nullable = true)
     private Terminal terminal;
 

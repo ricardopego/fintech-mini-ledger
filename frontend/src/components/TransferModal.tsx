@@ -7,19 +7,23 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
-import axios from "axios"; // Importamos o Axios para falar com o Java
+import axios from "axios";
 
 interface TransferModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  terminals: any[];    // Recebemos a lista real do Index.tsx
-  onSuccess: () => void; // Função para atualizar a lista após vender
+  terminals: any[];
+  onSuccess: () => void; 
 }
 
-export function TransferModal({ open, onOpenChange, terminals, onSuccess }: TransferModalProps) {
+// 1. O "= []" garante um valor padrão caso não venha nada do componente pai
+export function TransferModal({ open, onOpenChange, terminals = [], onSuccess }: TransferModalProps) {
   const [terminalId, setTerminalId] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 2. TRAVA DE SEGURANÇA: Garante que é um array antes de tentar fazer o .map()
+  const safeTerminals = Array.isArray(terminals) ? terminals : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,21 +36,24 @@ export function TransferModal({ open, onOpenChange, terminals, onSuccess }: Tran
     setLoading(true);
 
     try {
-      // ENVIANDO PARA O JAVA (localhost:8080)
-      // O seu backend espera: { amount: Double, terminal: { id: UUID } }
+      const valorNumerico = parseFloat(amount);
+      
+      // Encontra o nome da maquininha selecionada para salvar como descrição
+      const terminalSelecionado = safeTerminals.find(t => t.id === terminalId);
+      const descText = terminalSelecionado ? `Venda - ${terminalSelecionado.name}` : "Venda Direta";
+
+      // 3. PAYLOAD CORRIGIDO: Enviando exatamente o que o Java espera (description, amount, terminalId)
       await axios.post("http://localhost:8080/api/transactions", {
-        amount: parseFloat(amount),
-        terminal: {
-          id: terminalId
-        }
+        description: descText,
+        amount: valorNumerico,
+        terminalId: terminalId 
       });
 
-      toast.success(`Venda de R$ ${parseFloat(amount).toFixed(2)} registrada com sucesso!`);
+      toast.success(`Venda de R$ ${valorNumerico.toFixed(2)} registrada com sucesso!`);
       
-      // Limpa os campos e fecha o modal
       setTerminalId("");
       setAmount("");
-      onSuccess(); // Dispara o refresh dos dados no Dashboard
+      onSuccess(); 
       onOpenChange(false);
       
     } catch (error) {
@@ -61,7 +68,7 @@ export function TransferModal({ open, onOpenChange, terminals, onSuccess }: Tran
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Nova Venda (Backend Java)</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Nova Venda</DialogTitle>
           <DialogDescription>
             Selecione uma maquininha e registre o valor da venda.
           </DialogDescription>
@@ -74,11 +81,16 @@ export function TransferModal({ open, onOpenChange, terminals, onSuccess }: Tran
                 <SelectValue placeholder="Selecione o terminal do banco" />
               </SelectTrigger>
               <SelectContent>
-                {terminals.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name} (Taxa: {t.feePercentage}%)
-                  </SelectItem>
-                ))}
+                {/* 4. MAP SEGURO: Usando a variável blindada */}
+                {safeTerminals.length === 0 ? (
+                  <SelectItem value="none" disabled>Nenhuma maquininha encontrada</SelectItem>
+                ) : (
+                  safeTerminals.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} (Taxa: {t.feePercentage}%)
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -102,7 +114,7 @@ export function TransferModal({ open, onOpenChange, terminals, onSuccess }: Tran
             <Button 
               type="submit" 
               disabled={loading}
-              className="bg-success hover:bg-success/90 text-success-foreground"
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
               {loading ? "Salvando..." : "Confirmar Venda"}
             </Button>
