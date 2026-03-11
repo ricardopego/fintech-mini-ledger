@@ -1,65 +1,45 @@
-import { Wallet, TrendingUp, Percent, ArrowDownRight } from "lucide-react";
-import { useSummary } from "@/hooks/useStore";
+const fmt = (v: number) => 
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
-interface KPICardProps {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  accent?: "default" | "success" | "warning" | "destructive";
-}
+export function DashboardCards({ transactions }: { transactions: any[] }) {
+  // SOMA DE TODAS AS ENTRADAS (Valores positivos)
+  const gross = transactions
+    .filter(tx => tx.amount > 0)
+    .reduce((acc, tx) => acc + tx.amount, 0);
 
-function KPICard({ label, value, icon, accent = "default" }: KPICardProps) {
-  const accentStyles = {
-    default: "bg-primary/10 text-primary",
-    success: "bg-success/10 text-success",
-    warning: "bg-warning/10 text-warning",
-    destructive: "bg-destructive/10 text-destructive",
-  };
+  // SOMA DAS TAXAS (Apenas de transações que têm terminal)
+  const fees = transactions
+    .filter(tx => tx.terminal !== null)
+    .reduce((acc, tx) => acc + (tx.amount * (tx.terminal?.feePercentage || 0)) / 100, 0);
+
+  // SOMA DAS SAÍDAS MANUAIS (Valores negativos no banco)
+  const outflows = transactions
+    .filter(tx => tx.amount < 0)
+    .reduce((acc, tx) => acc + Math.abs(tx.amount), 0);
+
+  // SALDO FINAL: Entradas - Taxas - Saídas
+  const balance = gross - fees - outflows;
+
+  const cardStyle = "p-6 bg-card border border-border rounded-xl shadow-sm transition-all hover:border-primary/20";
 
   return (
-    <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <div className={`p-2 rounded-md ${accentStyles[accent]}`}>{icon}</div>
+    <div className="grid gap-4 md:grid-cols-4">
+      <div className={`${cardStyle} bg-primary/5 border-primary/20`}>
+        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Saldo em Conta</p>
+        <h3 className="text-2xl font-bold mt-1 text-primary">{fmt(balance)}</h3>
       </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function fmt(v: number) {
-  return `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-export function DashboardCards() {
-  const { balance, totalGross, totalFees, totalExits } = useSummary();
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <KPICard
-        label="Saldo em Conta"
-        value={fmt(balance)}
-        accent="default"
-        icon={<Wallet className="h-4 w-4" />}
-      />
-      <KPICard
-        label="Vendas Brutas"
-        value={fmt(totalGross)}
-        accent="success"
-        icon={<TrendingUp className="h-4 w-4" />}
-      />
-      <KPICard
-        label="Taxas Pagas"
-        value={fmt(totalFees)}
-        accent="warning"
-        icon={<Percent className="h-4 w-4" />}
-      />
-      <KPICard
-        label="Total de Saídas"
-        value={fmt(totalExits)}
-        accent="destructive"
-        icon={<ArrowDownRight className="h-4 w-4" />}
-      />
+      <div className={cardStyle}>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Vendas Brutas</p>
+        <h3 className="text-2xl font-bold mt-1 text-green-600">{fmt(gross)}</h3>
+      </div>
+      <div className={cardStyle}>
+        <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">Taxas Pagas</p>
+        <h3 className="text-2xl font-bold mt-1 text-destructive">-{fmt(fees)}</h3>
+      </div>
+      <div className={cardStyle}>
+        <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Total de Saídas</p>
+        <h3 className="text-2xl font-bold mt-1 text-orange-600">-{fmt(outflows)}</h3>
+      </div>
     </div>
   );
 }

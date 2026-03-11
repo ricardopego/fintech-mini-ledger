@@ -7,69 +7,76 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTerminals } from "@/hooks/useStore";
-import { addTransaction } from "@/lib/store";
+import axios from "axios"; // Importamos o Axios para falar com o Java
 
 interface TransferModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  terminals: any[];    // Recebemos a lista real do Index.tsx
+  onSuccess: () => void; // Função para atualizar a lista após vender
 }
 
-export function TransferModal({ open, onOpenChange }: TransferModalProps) {
-  const terminals = useTerminals();
+export function TransferModal({ open, onOpenChange, terminals, onSuccess }: TransferModalProps) {
   const [terminalId, setTerminalId] = useState("");
   const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!terminalId || !amount) {
       toast.error("Preencha todos os campos.");
       return;
     }
-    const terminal = terminals.find((t) => t.id === terminalId);
-    if (!terminal) return;
 
-    const gross = parseFloat(amount);
-    const fee = gross * (terminal.fee / 100);
-    const net = gross - fee;
-    const today = new Date();
-    const date = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+    setLoading(true);
 
-    addTransaction({
-      date,
-      type: "entrada",
-      description: `Venda - ${terminal.name}`,
-      grossAmount: gross,
-      fee,
-      netAmount: net,
-      terminalId: terminal.id,
-      terminalName: terminal.name,
-    });
+    try {
+      // ENVIANDO PARA O JAVA (localhost:8080)
+      // O seu backend espera: { amount: Double, terminal: { id: UUID } }
+      await axios.post("http://localhost:8080/api/transactions", {
+        amount: parseFloat(amount),
+        terminal: {
+          id: terminalId
+        }
+      });
 
-    toast.success(`Venda de R$ ${gross.toFixed(2)} registrada via ${terminal.name}. Taxa: R$ ${fee.toFixed(2)}`);
-    setTerminalId("");
-    setAmount("");
-    onOpenChange(false);
+      toast.success(`Venda de R$ ${parseFloat(amount).toFixed(2)} registrada com sucesso!`);
+      
+      // Limpa os campos e fecha o modal
+      setTerminalId("");
+      setAmount("");
+      onSuccess(); // Dispara o refresh dos dados no Dashboard
+      onOpenChange(false);
+      
+    } catch (error) {
+      console.error("Erro ao registrar venda no Java:", error);
+      toast.error("Erro ao salvar no banco de dados. O Java está rodando?");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Nova Venda</DialogTitle>
-          <DialogDescription>Registre uma venda e a taxa será calculada automaticamente.</DialogDescription>
+          <DialogTitle className="text-lg font-semibold">Nova Venda (Backend Java)</DialogTitle>
+          <DialogDescription>
+            Selecione uma maquininha e registre o valor da venda.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Terminal</Label>
+            <Label className="text-sm font-medium">Terminal / Maquininha</Label>
             <Select value={terminalId} onValueChange={setTerminalId}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione o terminal" />
+                <SelectValue placeholder="Selecione o terminal do banco" />
               </SelectTrigger>
               <SelectContent>
                 {terminals.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
-                    {t.name} ({t.fee.toFixed(2)}%)
+                    {t.name} (Taxa: {t.feePercentage}%)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -92,8 +99,12 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-success hover:bg-success/90 text-success-foreground">
-              Confirmar Venda
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="bg-success hover:bg-success/90 text-success-foreground"
+            >
+              {loading ? "Salvando..." : "Confirmar Venda"}
             </Button>
           </DialogFooter>
         </form>

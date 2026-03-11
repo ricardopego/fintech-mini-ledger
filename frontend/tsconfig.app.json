@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
@@ -24,9 +25,7 @@
     "skipLibCheck": true,
     "strict": false,
     "target": "ES2020",
-    "types": [
-      "vitest/globals"
-    ],
+    "types": [],
     "useDefineForClassFields": true
   },
   "include": [
