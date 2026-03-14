@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,15 +18,34 @@ export function ExpenseModal({ open, onOpenChange, onSuccess }: ExpenseModalProp
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 1. Função adicionada para formatar o dinheiro ao digitar
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    if (!value) {
+      setAmount("");
+      return;
+    }
+    const numericValue = Number(value) / 100;
+    const formattedValue = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(numericValue);
+    
+    setAmount(formattedValue);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // 2. Limpa a máscara do R$ antes de fazer a conta do negativo
+      const cleanAmount = Number(amount.replace(/\D/g, "")) / 100;
+      
       // Converte para negativo para o banco entender como saída
-      const value = Math.abs(parseFloat(amount)) * -1;
+      const value = Math.abs(cleanAmount) * -1;
 
-      await axios.post("http://localhost:8080/api/transactions", {
+      await api.post("/api/transactions", {
         description: description, // CHAVE IGUAL AO RECORD DO JAVA
         amount: value,
         terminalId: null // Saída manual não tem terminal
@@ -70,12 +89,12 @@ export function ExpenseModal({ open, onOpenChange, onSuccess }: ExpenseModalProp
 
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase text-gray-400">Valor Pago (R$)</Label>
+            {/* 3. Ajustado para inputMode e chamando a função de máscara */}
             <Input 
-              type="number" 
-              step="0.01" 
-              placeholder="0,00" 
+              inputMode="numeric" 
+              placeholder="R$ 0,00" 
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={handleAmountChange}
               required 
               className="h-12 font-bold text-destructive"
             />

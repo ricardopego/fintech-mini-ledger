@@ -10,7 +10,7 @@ export function Topbar({ isOnline }: { isOnline: boolean }) {
           <SidebarTrigger className="h-9 w-9 border border-border" />
           <div className="h-4 w-[1px] bg-border mx-2 hidden md:block" />
           <h2 className="text-xs md:text-sm font-bold tracking-tight text-slate-700">
-            FINTECH <span className="text-blue-600 font-black">LEDGER</span>
+             <span className="text-blue-600 font-black"></span>
           </h2>
         </div>
         <Badge variant={isOnline ? "outline" : "destructive"} className="gap-1.5 py-1 px-3">
