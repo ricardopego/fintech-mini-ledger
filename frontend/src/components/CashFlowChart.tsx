@@ -51,7 +51,7 @@ export function CashFlowChart({ transactions = [] }: { transactions: any[] }) {
   return (
     <div className="bg-white border border-slate-100 rounded-xl p-4 md:p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-        <h3 className="text-base font-bold text-slate-800">Fluxo de Caixa</h3>
+        <h3 className="text-base font-bold text-slate-800">Fluxo de Caixa (Valor Bruto)</h3>
         <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg w-full sm:w-auto overflow-x-auto">
           {filters.map((f) => (
             <button
