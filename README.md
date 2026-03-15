@@ -18,7 +18,7 @@ O sistema foca em controle financeiro para microempreendedores, integrando uma *
 - **Axios** (Consumo de API)
 
 ## 📊 Funcionalidades
-- **Gestão de Terminais:** Cadastro e exclusão de maquininhas de cartão com validação de FK no banco.
+- **Gestão de Terminais:** Cadastro e exclusão de maquininhas de cartão com validação no banco.
 - **Dashboard Financeiro:** Cards de saldo, vendas e taxas com lógica de cores para saúde financeira.
 - **Fluxo de Caixa:** Gráfico interativo com filtros de período (7d, 30d, 6m, 1a).
 - **Extrato:** Tabela de movimentações completa e responsiva para mobile.
