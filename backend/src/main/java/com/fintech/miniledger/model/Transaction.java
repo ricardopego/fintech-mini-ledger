@@ -25,15 +25,24 @@ public class Transaction {
     @JoinColumn(name = "terminal_id", nullable = true)
     private Terminal terminal;
 
+    private BigDecimal netAmount; // Valor Líquido
+
     // Getters e Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
     public Terminal getTerminal() { return terminal; }
     public void setTerminal(Terminal terminal) { this.terminal = terminal; }
+
+    public BigDecimal getNetAmount() { return netAmount; }
+    public void setNetAmount(BigDecimal netAmount) { this.netAmount = netAmount; }
 }

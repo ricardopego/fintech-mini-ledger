@@ -2,7 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, ArrowUpCircle, Percent, ArrowDownCircle } from "lucide-react";
 
 interface DashboardCardsProps {
-  transactions: any[];
+  transactions: TransactionItem[];
+}
+
+interface TransactionItem {
+  amount: number;
+  terminal?: {
+    feePercentage: number;
+  } | null;
 }
 
 export function DashboardCards({ transactions = [] }: DashboardCardsProps) {

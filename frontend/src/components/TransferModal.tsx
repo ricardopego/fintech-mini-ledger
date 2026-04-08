@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { api } from "@/lib/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { toast } from "sonner"; // <--- Importação da notificação adicionada
 interface TransferModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  terminals: any[];
+  terminals: { id: number | string; name: string }[];
   onSuccess: () => void;
 }
 
@@ -19,7 +19,7 @@ export function TransferModal({ open, onOpenChange, terminals, onSuccess }: Tran
   const [terminalId, setTerminalId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
     if (!value) {
       setAmount("");
@@ -34,7 +34,7 @@ export function TransferModal({ open, onOpenChange, terminals, onSuccess }: Tran
     setAmount(formattedValue);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { api } from "@/lib/api";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -11,7 +11,13 @@ import { toast } from "sonner";
 import { Smartphone, Trash2 } from "lucide-react";
 
 const Terminals = () => {
-  const [terminals, setTerminals] = useState([]);
+  type Terminal = {
+    id: string | number;
+    name: string;
+    feePercentage: number;
+  };
+
+  const [terminals, setTerminals] = useState<Terminal[]>([]);
   const [name, setName] = useState("");
   const [fee, setFee] = useState("");
   const [isOnline, setIsOnline] = useState(false);
@@ -35,7 +41,7 @@ const Terminals = () => {
     fetchTerminals();
   }, []);
 
-  const handleFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFeeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
     if (!value) {
       setFee("");
@@ -51,12 +57,12 @@ const Terminals = () => {
     setFee(formattedValue);
   };
 
-  const handleAddTerminal = async (e: React.FormEvent) => {
+  const handleAddTerminal = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const normalizedInputName = name.trim().toLowerCase();
     
-    const isDuplicate = terminals.some((t: any) => 
+    const isDuplicate = terminals.some((t) => 
       t.name.trim().toLowerCase() === normalizedInputName
     );
 
@@ -81,8 +87,8 @@ const Terminals = () => {
     }
   };
 
-  const openDeleteModal = (id: string) => {
-    setTerminalToDelete(id);
+  const openDeleteModal = (id: string | number) => {
+    setTerminalToDelete(String(id));
     setIsDeleteDialogOpen(true);
   };
 
@@ -144,7 +150,7 @@ const Terminals = () => {
                 <h3 className="text-sm font-semibold">Terminais Ativos ({safeTerminals.length})</h3>
               </div>
               <div className="divide-y divide-border">
-                {safeTerminals.map((t: any) => (
+                {safeTerminals.map((t) => (
                   <div key={t.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-primary/10 rounded-lg">

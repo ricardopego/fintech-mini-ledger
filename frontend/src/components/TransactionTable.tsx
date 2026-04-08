@@ -1,18 +1,61 @@
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { api } from "@/lib/api"; // ⚠️ ATENÇÃO: Ajuste este caminho para o seu arquivo onde o axios (api) está configurado!
 
 const fmt = (v: number) => 
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
-export function TransactionTable({ transactions = [] }: { transactions: any[] }) {
-  // 1. GARANTE que é um array (evita o erro do filter)
-  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+type Transaction = {
+  id: string | number;
+  createdAt: string;
+  amount?: number;
+  netAmount?: number; // Adicionamos a variável do Java aqui!
+  description?: string;
+  terminal?: {
+    name?: string;
+    feePercentage?: number;
+  } | null;
+};
 
-  // 2. FILTRO DE LIMPEZA: Remove dados corrompidos, vazios ou sem ID antes de renderizar
-  const validTransactions = safeTransactions.filter(tx => tx && tx.id && tx.createdAt);
+export function TransactionTable({ transactions = [] }: { transactions?: Transaction[] | null }) {
+  // --- ESTADOS DO FILTRO ---
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [localTransactions, setLocalTransactions] = useState<Transaction[]>([]);
 
-  // 3. ORDENAÇÃO
+  // Sincroniza os dados iniciais quando a tela carrega
+  useEffect(() => {
+    setLocalTransactions(Array.isArray(transactions) ? transactions : []);
+  }, [transactions]);
+
+  // Função que bate no Java com as datas escolhidas
+  const handleFilter = async () => {
+    try {
+      const params: Record<string, string> = {};
+      if (startDate) params.startDate = `${startDate}T00:00:00`;
+      if (endDate) params.endDate = `${endDate}T23:59:59`;
+
+      const response = await api.get("/api/transactions", { params });
+      setLocalTransactions(response.data);
+    } catch (error) {
+      console.error("Erro ao filtrar transações:", error);
+    }
+  };
+
+  // Limpa o filtro e volta a mostrar tudo
+  const handleClear = () => {
+    setStartDate("");
+    setEndDate("");
+    setLocalTransactions(Array.isArray(transactions) ? transactions : []);
+  };
+  // --------------------------
+
+  const validTransactions = localTransactions.filter(
+    (tx): tx is Transaction => !!tx && !!tx.id && !!tx.createdAt
+  );
+
   const sortedList = [...validTransactions].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -25,9 +68,7 @@ export function TransactionTable({ transactions = [] }: { transactions: any[] })
         </div>
       </div>
 
-      {/* ADICIONADO: Wrapper de responsividade com overflow horizontal */}
       <div className="w-full overflow-x-auto">
-        {/* ADICIONADO: Largura mínima para evitar que as colunas se esmaguem no mobile */}
         <div className="min-w-[800px]">
           <div className="max-h-[450px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
             <Table>
@@ -46,16 +87,19 @@ export function TransactionTable({ transactions = [] }: { transactions: any[] })
                 {sortedList.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center text-xs text-gray-400 font-bold uppercase tracking-widest">
-                      Nenhuma movimentação válida encontrada
+                      Nenhuma movimentação encontrada
                     </TableCell>
                   </TableRow>
                 ) : (
                   sortedList.map((tx) => {
-                    const amount = tx.amount || 0;
+                    const amount = Number(tx.amount ?? 0);
                     const isEntrada = amount > 0;
-                    const fee = tx.terminal ? (amount * tx.terminal.feePercentage) / 100 : 0;
-                    const dateObj = new Date(tx.createdAt);
                     
+                    // LÓGICA REFATORADA: O Front-end não faz mais conta!
+                    // Ele usa o netAmount do Java. Se o Java não mandar (registros antigos), usa o bruto.
+                    const netValue = tx.netAmount ?? amount;
+                    
+                    const dateObj = new Date(tx.createdAt);
                     const txIdStr = tx.id?.toString().substring(0, 8) || "ERROR";
 
                     return (
@@ -97,8 +141,9 @@ export function TransactionTable({ transactions = [] }: { transactions: any[] })
                           {isEntrada ? '+' : ''}{fmt(amount)}
                         </TableCell>
 
+                        {/* EXIBINDO O VALOR LÍQUIDO DO JAVA */}
                         <TableCell className={`text-right text-sm font-black ${isEntrada ? 'text-green-600' : 'text-red-600'}`}>
-                          {fmt(amount - fee)}
+                          {fmt(netValue)}
                         </TableCell>
                       </TableRow>
                     );

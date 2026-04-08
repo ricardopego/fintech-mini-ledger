@@ -5,9 +5,11 @@ import com.fintech.miniledger.model.Terminal;
 import com.fintech.miniledger.repository.TransactionRepository;
 import com.fintech.miniledger.repository.TerminalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -23,30 +25,49 @@ public class TransactionController {
     @Autowired
     private TerminalRepository terminalRepository;
 
+    // ==========================================
+    // NOVO GET COM FILTROS DE DATA
+    // ==========================================
     @GetMapping
-    public List<Transaction> getAll() {
-        return repository.findAll();
+    public List<Transaction> getAll(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        // Chama a nova query inteligente que criamos no repositório
+        return repository.findByDateBetween(startDate, endDate);
     }
 
     @PostMapping
     public Transaction create(@RequestBody TransactionRequest request) {
         Transaction transaction = new Transaction();
 
-        // Salva a descrição (pode ser null para vendas, mas o record deve aceitar)
         transaction.setDescription(request.description());
         transaction.setAmount(request.amount());
         transaction.setCreatedAt(LocalDateTime.now());
 
-        // CRÍTICO: Se o terminalId vier no JSON, temos de procurar e associar
         if (request.terminalId() != null) {
             Terminal terminal = terminalRepository.findById(request.terminalId())
                     .orElse(null);
             transaction.setTerminal(terminal);
 
-            // Se for venda e a descrição for nula, podemos setar um padrão
             if (transaction.getDescription() == null && terminal != null) {
                 transaction.setDescription("Venda via " + terminal.getName());
             }
+        }
+
+        if (transaction.getAmount() != null
+                && transaction.getAmount().compareTo(BigDecimal.ZERO) > 0
+                && transaction.getTerminal() != null
+                && transaction.getTerminal().getFeePercentage() > 0) {
+
+            BigDecimal feePercentage = BigDecimal.valueOf(transaction.getTerminal().getFeePercentage());
+            BigDecimal fee = feePercentage.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+            BigDecimal discount = transaction.getAmount().multiply(fee);
+            BigDecimal netValue = transaction.getAmount().subtract(discount);
+
+            transaction.setNetAmount(netValue);
+        } else {
+            transaction.setNetAmount(transaction.getAmount());
         }
 
         return repository.save(transaction);

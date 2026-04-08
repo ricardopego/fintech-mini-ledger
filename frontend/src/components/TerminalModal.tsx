@@ -6,7 +6,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 
-export function TerminalModal({ open, onOpenChange, onSuccess }: any) {
+type TerminalModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+};
+
+export function TerminalModal({ open, onOpenChange, onSuccess }: TerminalModalProps) {
   const [name, setName] = useState("");
   const [fee, setFee] = useState("");
 
