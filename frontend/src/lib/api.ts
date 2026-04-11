@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Centralizamos o IP aqui. Mudou o IP? Muda só aqui.
 export const api = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "http://localhost:8081",
 });
 
 
