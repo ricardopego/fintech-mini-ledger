@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Topbar } from "@/components/Topbar";
 import { TransactionTable } from "@/components/TransactionTable";
 import { Filter, X, Trash2, FileSpreadsheet, FileText, History, Download } from "lucide-react"; 
+import { CashflowProjection } from "@/components/CashflowProjection";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -276,6 +277,7 @@ const Extrato = () => {
           <Topbar isOnline={isOnline} />
           
           <main className="flex-1 p-6 space-y-6 overflow-auto">
+            {/* CABEÇALHO */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h1 className="text-2xl font-bold tracking-tight">Extrato</h1>
               <div className="flex flex-wrap gap-2">
@@ -300,6 +302,10 @@ const Extrato = () => {
               </div>
             </div>
 
+            {/* --- AQUI ENTRA A FUNCIONALIDADE DA AC3 (PROJEÇÃO) --- */}
+            <CashflowProjection />
+
+            {/* CHIPS DE FILTROS */}
             <div className="flex flex-wrap gap-2">
               {filtrosAplicados.dataInicial && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium">
@@ -333,6 +339,7 @@ const Extrato = () => {
               )}
             </div>
 
+            {/* TABELA */}
             <div className="rounded-md border bg-card text-card-foreground shadow-sm">
               <TransactionTable transactions={transacoesFiltradas} />
               {transacoesFiltradas.length === 0 && (
@@ -342,7 +349,7 @@ const Extrato = () => {
               )}
             </div>
 
-            {/* --- NOVO: BOTÃO DE HISTÓRICO EMBAIXO DA TABELA --- */}
+            {/* BOTÃO DE HISTÓRICO EMBAIXO DA TABELA */}
             <div className="flex justify-center pt-2 pb-6">
               <button 
                 onClick={() => { fetchLogs(); setModalLogsAberto(true); }}
