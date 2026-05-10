@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Entity
 @Table(name = "transactions")
 public class Transaction {
@@ -46,3 +47,4 @@ public class Transaction {
     public BigDecimal getNetAmount() { return netAmount; }
     public void setNetAmount(BigDecimal netAmount) { this.netAmount = netAmount; }
 }
+

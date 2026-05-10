@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -25,4 +26,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    // Soma todas as entradas (valores positivos) dos últimos 3 meses
+    @Query(value = "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE amount > 0 AND created_at >= CURRENT_DATE - INTERVAL '3 months'", nativeQuery = true)
+    BigDecimal sumIncomeLast3Months();
+
+    // Soma todas as saídas (valores negativos) dos últimos 3 meses
+    @Query(value = "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE amount < 0 AND created_at >= CURRENT_DATE - INTERVAL '3 months'", nativeQuery = true)
+    BigDecimal sumExpenseLast3Months();
 }
