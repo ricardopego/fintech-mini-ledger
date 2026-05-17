@@ -33,6 +33,7 @@ type ExportLog = {
 type Filtros = {
   tipo: "entrada" | "saida" | "";
   valor: string;
+  descricao: string;
   terminal: string;
   dataInicial: string;
   dataFinal: string;
@@ -49,10 +50,11 @@ const Extrato = () => {
   const [logSelecionado, setLogSelecionado] = useState<ExportLog | null>(null);
 
   const [modalAberto, setModalAberto] = useState(false);
-  
+
   const [filtrosAplicados, setFiltrosAplicados] = useState<Filtros>({
     tipo: "",
     valor: "",
+    descricao: "",
     terminal: "",
     dataInicial: "",
     dataFinal: "",
@@ -61,6 +63,7 @@ const Extrato = () => {
   const [filtrosModal, setFiltrosModal] = useState<Filtros>({
     tipo: "",
     valor: "",
+    descricao: "",
     terminal: "",
     dataInicial: "",
     dataFinal: "",
@@ -104,6 +107,7 @@ const Extrato = () => {
       const filtrosDesc = [
         filtrosAplicados.tipo && `Tipo: ${filtrosAplicados.tipo}`,
         filtrosAplicados.valor && `Valor: ${filtrosAplicados.valor}`,
+        filtrosAplicados.descricao && `Descrição: ${filtrosAplicados.descricao}`,
         filtrosAplicados.terminal && `Terminal: ${filtrosAplicados.terminal}`,
         filtrosAplicados.dataInicial && `Início: ${filtrosAplicados.dataInicial}`,
         filtrosAplicados.dataFinal && `Fim: ${filtrosAplicados.dataFinal}`
@@ -151,6 +155,7 @@ const Extrato = () => {
     const estadoVazio: Filtros = {
       tipo: "",
       valor: "",
+      descricao: "",
       terminal: "",
       dataInicial: "",
       dataFinal: "",
@@ -191,6 +196,11 @@ const Extrato = () => {
       if (filtrosAplicados.valor) {
         const valorNumericoFiltro = Number(filtrosAplicados.valor.replace(/\./g, "").replace(",", "."));
         if (Math.abs(t.amount || 0) !== valorNumericoFiltro) return false;
+      }
+
+      if (filtrosAplicados.descricao) {
+        const texto = (t.description || "").toLowerCase();
+        if (!texto.includes(filtrosAplicados.descricao.toLowerCase())) return false;
       }
 
       if (filtrosAplicados.terminal) {
@@ -323,6 +333,12 @@ const Extrato = () => {
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium">
                   <span>Tipo: {filtrosAplicados.tipo === 'entrada' ? 'Entrada' : 'Saída'}</span>
                   <button onClick={() => removerFiltro("tipo")} className="hover:bg-muted/50 rounded-full p-0.5 transition-colors"><X className="h-3 w-3" /></button>
+                </div>
+              )}
+              {filtrosAplicados.descricao && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium">
+                  <span className="max-w-[200px] truncate" title={filtrosAplicados.descricao}>Descrição: {filtrosAplicados.descricao}</span>
+                  <button onClick={() => removerFiltro("descricao")} className="hover:bg-muted/50 rounded-full p-0.5 transition-colors shrink-0"><X className="h-3 w-3" /></button>
                 </div>
               )}
               {filtrosAplicados.valor && (
@@ -490,6 +506,16 @@ const Extrato = () => {
                   <option value="entrada">Entradas (Positivas)</option>
                   <option value="saida">Saídas (Negativas)</option>
                 </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none text-foreground">Descrição</label>
+                <input
+                  type="text"
+                  placeholder="Trecho da descrição da transação"
+                  value={filtrosModal.descricao}
+                  onChange={(e) => setFiltrosModal({ ...filtrosModal, descricao: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none text-foreground">Valor exato (R$)</label>
